@@ -3,7 +3,8 @@ import { cookies } from 'next/headers';
 import Shell from '../components/Shell';
 import { MeChip } from '../components/Me';
 import Timeline from '../components/Timeline';
-import { analyse, isUser, rangeWindow, SIDE_NAME, USERS, USERS_OF, USER_NAME, weekGrid, weekStartDate } from '@/lib/core';
+import Today from '../components/Today';
+import { analyse, isUser, localDate, rangeWindow, SIDE_NAME, startOfDayMs, USERS, USERS_OF, USER_NAME, weekGrid, weekStartDate, ZONE } from '@/lib/core';
 import { listTrips } from '@/lib/repo';
 import { hours, names, percent, timeWindow } from '@/lib/format';
 
@@ -27,6 +28,9 @@ export default async function Usage({ searchParams }) {
   const win = rangeWindow(range, now, first);
   const r = analyse(trips, { ...win, now });
   const grid = weekGrid(trips, weekStartDate(now, week), now);
+  const today = localDate(now);
+  const todayDay = weekGrid(trips, today, now, ZONE, 1)[0];
+  const todayStats = analyse(trips, { from: startOfDayMs(today), to: now, now });
 
   const q = (patch) => {
     const p = new URLSearchParams({ r: range, w: String(week), ...patch });
@@ -38,6 +42,8 @@ export default async function Usage({ searchParams }) {
 
   return (
     <Shell current="/usage" aside={isUser(me) ? <MeChip me={me} /> : null}>
+      <Today day={todayDay} stats={todayStats} />
+
       <nav className="segmented" aria-label="טווח">
         {RANGES.map((x) => (
           <Link key={x.key} href={q({ r: x.key })} className="segmented__item" aria-current={x.key === range ? 'true' : undefined}>

@@ -228,6 +228,13 @@ describe('ranges and the weekly timeline', () => {
     expect(grid[3].today).toBe(true);
     expect(grid[4].future).toBe(true);
   });
+  it('a single day, with where now falls in it', () => {
+    const grid = weekGrid([trip('adi', J('2026-11-04', 12), null), trip('or', J('2026-11-04', 13), J('2026-11-04', 14))], '2026-11-04', now, undefined, 1);
+    expect(grid).toHaveLength(1);
+    expect(grid[0].now).toBeCloseTo(15 / 24);
+    expect(grid[0].clash).toEqual([{ a: 13 / 24, b: 14 / 24 }]);
+    expect(weekGrid([], '2026-11-01', now)[0].now).toBeNull();
+  });
   it('a 25-hour fall-back day still spans its row', () => {
     const t = trip('adi', fromLocal(2026, 10, 25, 0, 0), fromLocal(2026, 10, 26, 0, 0));
     const grid = weekGrid([t], '2026-10-25', J('2026-11-01', 0));

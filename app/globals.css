@@ -430,6 +430,15 @@ input:focus-visible { outline: 2px solid var(--road); outline-offset: 1px; }
 .tl-hours__track span:first-child { transform: none; }
 .tl-hours__track span:last-child { transform: translateX(100%); }
 
+.today__track { block-size: 3.2rem; }
+.today__now {
+  position: absolute;
+  inset-block: -2px;
+  inline-size: 0;
+  border-inline-start: 2px dashed var(--ink);
+}
+.today__line { margin: 0; }
+
 .legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; font-size: 0.85rem; color: var(--ink-2); }
 .legend li { display: flex; align-items: center; gap: 0.35rem; }
 .swatch { inline-size: 1.1rem; block-size: 0.7rem; border-radius: 2px; display: inline-block; }
