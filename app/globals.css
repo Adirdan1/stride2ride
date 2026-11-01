@@ -315,7 +315,33 @@ input:focus-visible { outline: 2px solid var(--road); outline-offset: 1px; }
 .row--open { border-inline-start-style: dashed; border-inline-start-color: var(--ink); }
 .row--clash { border-inline-start-color: var(--break); background: var(--break-wash); border-color: transparent; }
 .row__main { font-variant-numeric: tabular-nums; }
-.row__side { color: var(--ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.row__side { color: var(--ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 0.6rem; }
+
+/* ─── cars ──────────────────────────────────────────────────────────────── */
+/* The cars' paint, as illustration colours rather than text colours. */
+:root { --paint-star: #9aa0a6; --paint-corsa: #d23b2f; }
+
+.cars { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.car {
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius);
+  border: 1px dashed var(--line-strong);
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.car[aria-checked='true'] { border: 2px solid var(--ink); background: var(--surface); color: var(--ink); font-weight: 600; }
+.row__main--stack { display: flex; flex-direction: column; gap: 0.1rem; align-items: flex-start; }
+.who-line { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.car__dot { inline-size: 0.8rem; block-size: 0.8rem; border-radius: 50%; flex: none; display: inline-block; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18); }
+.car__dot--star { background: var(--paint-star); }
+.car__dot--corsa { background: var(--paint-corsa); }
+.car-tag { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.85rem; color: var(--ink-2); font-weight: 400; }
 
 /* ─── the sheet ─────────────────────────────────────────────────────────── */
 

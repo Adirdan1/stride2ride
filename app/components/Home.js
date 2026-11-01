@@ -1,10 +1,11 @@
 'use client';
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { SIDE_OF, USER_NAME } from '@/lib/core';
+import { CAR_NAME, SIDE_OF, USER_NAME, defaultCar } from '@/lib/core';
 import { clock, dayLabel, elapsed, timeWindow } from '@/lib/format';
 import Wheel from './Wheel';
 import TripSheet from './TripSheet';
+import CarPicker, { CarTag } from './CarPicker';
 
 function useNow(serverNow) {
   const [now, setNow] = useState(serverNow);
@@ -23,6 +24,7 @@ export default function Home({ me, now: serverNow, open, out, recent }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [sheet, setSheet] = useState(null); // null | { trip } | { trip: null }
+  const [car, setCar] = useState(() => defaultCar(me));
 
   async function tap(action) {
     if (busy) return;
@@ -32,7 +34,7 @@ export default function Home({ me, now: serverNow, open, out, recent }) {
       const res = await fetch('/api/trips', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ action, user: me }),
+        body: JSON.stringify({ action, user: me, car }),
       });
       if (!res.ok) setError((await res.json().catch(() => ({}))).error ?? 'משהו השתבש');
       startTransition(() => router.refresh());
@@ -46,6 +48,7 @@ export default function Home({ me, now: serverNow, open, out, recent }) {
   const others = out.filter((o) => o.user !== me);
   const otherSide = others.filter((o) => SIDE_OF[o.user] !== SIDE_OF[me]);
   const anyoneOut = out.length > 0;
+  const carTakenBy = others.filter((o) => o.car === car);
   const working = busy || pending;
 
   return (
@@ -56,14 +59,12 @@ export default function Home({ me, now: serverNow, open, out, recent }) {
           {anyoneOut ? (
             <>
               <strong>בחוץ עכשיו</strong>
-              <span>
-                {out.map((o, i) => (
-                  <span key={o.user} className={`who who--${SIDE_OF[o.user]}`}>
-                    {i > 0 && ' · '}
-                    {USER_NAME[o.user]} מ־{clock(o.since)}
-                  </span>
-                ))}
-              </span>
+              {out.map((o) => (
+                <span key={o.user} className="who-line">
+                  <span className={`who who--${SIDE_OF[o.user]}`}>{USER_NAME[o.user]} מ־{clock(o.since)}</span>
+                  <CarTag car={o.car} />
+                </span>
+              ))}
             </>
           ) : (
             <>
@@ -81,14 +82,21 @@ export default function Home({ me, now: serverNow, open, out, recent }) {
               חזרתי הביתה
             </button>
             <p className="action__note">
-              בחוץ כבר <strong>{elapsed(now - open.startedAt)}</strong> · מ־{clock(open.startedAt)}
+              <CarTag car={open.car} /> · בחוץ כבר <strong>{elapsed(now - open.startedAt)}</strong> · מ־{clock(open.startedAt)}
             </p>
           </>
         ) : (
           <>
+            <CarPicker value={car} onChange={setCar} disabled={working} />
             <button className="btn btn--hero" disabled={working} onClick={() => tap('leave')}>
               יצאתי מהבית
             </button>
+            {carTakenBy.length > 0 && (
+              <p className="action__note">
+                ה{CAR_NAME[car]} כבר בחוץ עם {carTakenBy.map((o) => USER_NAME[o.user]).join(' ו')}.
+                {carTakenBy.some((o) => SIDE_OF[o.user] !== SIDE_OF[me]) && ' אם יוצאים ביחד, מספיק שרק אחד ידווח.'}
+              </p>
+            )}
             {otherSide.length > 0 && (
               <p className="action__note action__note--clash">
                 {otherSide.map((o) => USER_NAME[o.user]).join(' ו')} בחוץ — יציאה עכשיו תהיה התנגשות
@@ -111,8 +119,9 @@ export default function Home({ me, now: serverNow, open, out, recent }) {
             {recent.map((t) => (
               <li key={t.id}>
                 <button className={`row${t.endedAt == null ? ' row--open' : ''}`} onClick={() => setSheet({ trip: t })}>
-                  <span className="row__main">
-                    {t.endedAt == null ? `${dayLabel(t.startedAt)} · מ־${clock(t.startedAt)}` : timeWindow(t.startedAt, t.endedAt)}
+                  <span className="row__main row__main--stack">
+                    <span>{t.endedAt == null ? `${dayLabel(t.startedAt)} · מ־${clock(t.startedAt)}` : timeWindow(t.startedAt, t.endedAt)}</span>
+                    <CarTag car={t.car} />
                   </span>
                   <span className="row__side">
                     {t.endedAt == null ? 'פתוחה' : elapsed(t.endedAt - t.startedAt)}

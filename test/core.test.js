@@ -13,7 +13,7 @@ const J = (d, h, m = 0) => {
   return fromLocal(y, mo, da, h, m);
 };
 let seq = 0;
-const trip = (user, s, e) => ({ id: `t${++seq}`, user, startedAt: s, endedAt: e });
+const trip = (user, s, e) => ({ id: `t${++seq}`, user, car: user === 'adi' ? 'corsa' : 'star', startedAt: s, endedAt: e });
 
 describe('zone handling', () => {
   it('knows Israel winter and summer offsets', () => {
@@ -241,7 +241,7 @@ describe('home helpers and validation', () => {
   it('finds open trips and who is out', () => {
     expect(openTripOf(trips, 'adi')).toBe(trips[1]);
     expect(openTripOf(trips, 'adir')).toBeNull();
-    expect(whoIsOut(trips)).toEqual([{ user: 'adi', since: J('2026-11-04', 14) }]);
+    expect(whoIsOut(trips)).toEqual([{ user: 'adi', since: J('2026-11-04', 14), car: 'corsa' }]);
   });
   it('recent trips are mine, newest first, capped', () => {
     const many = Array.from({ length: 8 }, (_, k) => trip('or', J('2026-11-03', k), J('2026-11-03', k, 30)));
@@ -250,14 +250,14 @@ describe('home helpers and validation', () => {
     expect(r[0].startedAt).toBe(J('2026-11-03', 7));
   });
   it('rejects bad trips with a reason', () => {
-    expect(tripProblem({ user: 'x', startedAt: 1 }, [], now)).toBeTruthy();
-    expect(tripProblem({ user: 'or', startedAt: J('2026-11-04', 12), endedAt: J('2026-11-04', 11) }, [], now)).toMatch('אחרי');
-    expect(tripProblem({ user: 'or', startedAt: J('2026-11-05', 12) }, [], now)).toMatch('בעתיד');
-    expect(tripProblem({ user: 'adir', startedAt: J('2026-11-04', 9, 30), endedAt: J('2026-11-04', 11) }, trips, now)).toMatch('חופף');
-    expect(tripProblem({ user: 'adi', startedAt: J('2026-11-04', 14, 30) }, trips, now)).toMatch('פתוחה');
+    expect(tripProblem({ user: 'x', car: 'star', startedAt: 1 }, [], now)).toBeTruthy();
+    expect(tripProblem({ user: 'or', car: 'star', startedAt: J('2026-11-04', 12), endedAt: J('2026-11-04', 11) }, [], now)).toMatch('אחרי');
+    expect(tripProblem({ user: 'or', car: 'star', startedAt: J('2026-11-05', 12) }, [], now)).toMatch('בעתיד');
+    expect(tripProblem({ user: 'adir', car: 'star', startedAt: J('2026-11-04', 9, 30), endedAt: J('2026-11-04', 11) }, trips, now)).toMatch('חופף');
+    expect(tripProblem({ user: 'adi', car: 'star', startedAt: J('2026-11-04', 14, 30) }, trips, now)).toMatch('פתוחה');
   });
   it('accepts a trip that touches but does not overlap, and an edit of itself', () => {
-    expect(tripProblem({ user: 'adir', startedAt: J('2026-11-04', 10), endedAt: J('2026-11-04', 11) }, trips, now)).toBeNull();
+    expect(tripProblem({ user: 'adir', car: 'star', startedAt: J('2026-11-04', 10), endedAt: J('2026-11-04', 11) }, trips, now)).toBeNull();
     expect(tripProblem({ ...trips[0], startedAt: J('2026-11-04', 8) }, trips, now)).toBeNull();
   });
 });
@@ -305,5 +305,37 @@ describe('savings', () => {
     expect(parseSettings({ ...r, trackingStart: 'x' }).error).toBeTruthy();
     expect(parseSettings({ trackingStart: '2026-11-01', decisionDate: '2026-10-01', savingsHome: 1, savingsAdi: 1, capital: 1, annualReturn: 1 }).error).toBeTruthy();
     expect(parseSettings({ trackingStart: '2026-11-01', savingsHome: '-5', savingsAdi: 1, capital: 1, annualReturn: 1 }).error).toBeTruthy();
+  });
+});
+
+describe('cars', async () => {
+  const { defaultCar, isCar, CAR_OF_SIDE } = await import('../lib/core.js');
+  it('each household defaults to its own car', () => {
+    expect(defaultCar('adir')).toBe('star');
+    expect(defaultCar('or')).toBe('star');
+    expect(defaultCar('adi')).toBe('corsa');
+    expect(CAR_OF_SIDE).toEqual({ home: 'star', adi: 'corsa' });
+  });
+  it('only the two cars are valid', () => {
+    expect(isCar('star')).toBe(true);
+    expect(isCar('corsa')).toBe(true);
+    expect(isCar('tesla')).toBe(false);
+    expect(isCar(undefined)).toBe(false);
+  });
+  it('a trip without a valid car is refused', () => {
+    const now = Date.UTC(2026, 10, 4, 12);
+    expect(tripProblem({ user: 'adir', car: 'x', startedAt: now - HOUR, endedAt: now }, [], now)).toMatch('רכב');
+    expect(tripProblem({ user: 'adir', car: 'corsa', startedAt: now - HOUR, endedAt: now }, [], now)).toBeNull();
+  });
+  it('the car does not change collisions: Adir in the Corsa against Adi in the Corsa is still one clash', () => {
+    const J = (h) => fromLocal(2026, 11, 2, h, 0);
+    const r = analyse(
+      [
+        { id: 'a', user: 'adir', car: 'corsa', startedAt: J(8), endedAt: J(10) },
+        { id: 'b', user: 'adi', car: 'corsa', startedAt: J(9), endedAt: J(11) },
+      ],
+      { from: J(0), to: J(23), now: J(23) },
+    );
+    expect(r.collisionMs).toBe(HOUR);
   });
 });

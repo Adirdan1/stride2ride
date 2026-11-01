@@ -16,7 +16,7 @@ export async function PATCH(req, { params }) {
   if (startedAt == null) return bad('שעת יציאה לא תקינה');
   if (body.end && endedAt == null) return bad('שעת חזרה לא תקינה');
 
-  const candidate = { id, user: current.user, startedAt, endedAt };
+  const candidate = { id, user: current.user, car: body.car ?? current.car, startedAt, endedAt };
   const problem = tripProblem(candidate, trips, Date.now());
   if (problem) return bad(problem);
   const r = await updateTrip(id, candidate);
