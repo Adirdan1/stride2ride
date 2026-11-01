@@ -1,5 +1,6 @@
 import { Fraunces, Archivo, Heebo } from 'next/font/google';
 import './globals.css';
+import RegisterSW from './components/RegisterSW';
 
 const display = Fraunces({ subsets: ['latin'], weight: ['700'], variable: '--font-display', display: 'swap' });
 const sans = Archivo({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-sans', display: 'swap' });
@@ -29,7 +30,10 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="he" dir="rtl" className={`${display.variable} ${sans.variable} ${hebrew.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <RegisterSW />
+      </body>
     </html>
   );
 }

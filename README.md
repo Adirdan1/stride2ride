@@ -63,3 +63,20 @@ Environment variables: see `.env.example`.
 ## Deploy
 
 Vercel project `stride2ride`, linked to this repo, production branch `main`. `vercel.json` pins the framework to Next.js. Set `APP_PIN`, `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` on production and preview.
+
+## Notifications (Web Push)
+
+Works on iPhone from iOS 16.4, only when the app is opened from the home screen. No Apple Developer account is needed: it is standard Web Push with VAPID.
+
+- **Subscribe:** `/settings` (the bell in the top bar) → הפעל התראות. The permission prompt is requested inside the tap. The subscription is saved to `ride.push_subscriptions` (RLS on, no policies) through `/api/push`.
+- **Service worker:** `public/sw.js`. Every `push` shows a notification, because iOS revokes permission from apps that receive silent pushes. Tapping one opens the app.
+- **Triggers:** `ride.notify_trip` runs after insert/update on `ride.trips`.
+  - A new **open** trip → 🚗 *rider* יצא עם ה*car*.
+  - `ended_at` going from null to a time → 🏠 ה*car* חזרה (*rider*).
+  - A trip added by hand that is already finished sends nothing.
+  - The trigger POSTs through pg_net to the edge function `ride-notify` with an `x-ride-secret` header. Logging a trip never fails because of a notification.
+- **Send:** `supabase/functions/ride-notify` uses `npm:web-push` and sends to every subscription except the rider's own. Subscriptions answering 404/410 are deleted. Wording is in `messages.js`, which the app's tests import.
+- **Secrets live in Supabase Vault:**
+  - `ride_notify_secret` is generated in Postgres.
+  - `ride_vapid_public` / `ride_vapid_private` were generated once by the function's `{"kind":"init"}`.
+  - If `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` are both set as edge function secrets, the function uses them instead. Changing keys invalidates every phone's subscription, so everyone must tap הפעל התראות again.

@@ -513,3 +513,24 @@ input:focus-visible { outline: 2px solid var(--road); outline-offset: 1px; }
 .skeleton--bar { block-size: 2.75rem; }
 .skeleton--hero { block-size: 9rem; }
 .skeleton--row { block-size: 3rem; border-radius: var(--radius); }
+
+/* ─── settings ──────────────────────────────────────────────────────────── */
+
+.bar__end { display: flex; align-items: center; gap: 0.5rem; }
+.icon-btn[aria-current='page'] { background: var(--sunken); }
+
+.status-box { margin: 0; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--radius); }
+.status-box > div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.6rem 0.85rem; }
+.status-box > div + div { border-block-start: 1px solid var(--line); }
+.status-box dt { color: var(--ink-2); }
+.status-box dd { margin: 0; font-weight: 600; }
+
+.hint {
+  margin: 0;
+  padding: 0.6rem 0.85rem;
+  background: var(--sunken);
+  border-inline-start: var(--spine) solid var(--ink-3);
+  border-radius: var(--radius-sm);
+  color: var(--ink-2);
+  line-height: 1.45;
+}
