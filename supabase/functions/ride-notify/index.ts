@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
   const payload = JSON.stringify(message);
   const gone: string[] = [];
   let sent = 0;
-  const failed: { rider: string; status?: number; message: string }[] = [];
+  const failed: { rider: string; status?: number; message: string; body?: string }[] = [];
 
   await Promise.all(
     (subs ?? []).map(async (sub) => {
@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
       } catch (e) {
         const status = (e as { statusCode?: number }).statusCode;
         if (isGone(status)) gone.push(sub.id);
-        else failed.push({ rider: sub.rider, status, message: String((e as Error).message ?? e) });
+        else failed.push({ rider: sub.rider, status, message: String((e as Error).message ?? e), body: String((e as { body?: string }).body ?? '').slice(0, 300) });
       }
     }),
   );
