@@ -86,7 +86,9 @@ Deno.serve(async (req) => {
         await webpush.sendNotification(
           { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
           payload,
-          { TTL: 60 * 60, urgency: 'high', topic: message.tag.slice(0, 32).replace(/[^A-Za-z0-9_-]/g, '_') },
+          // No Topic header: Apple answers 400 BadWebPushTopic to values other
+          // push services accept. Repeats are collapsed on the phone by `tag`.
+          { TTL: 60 * 60, urgency: 'high' },
         );
         sent++;
       } catch (e) {
