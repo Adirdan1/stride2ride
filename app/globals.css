@@ -9,6 +9,10 @@
   --ink-3: #6f6a61;
   --line: #e5ded2;
   --line-strong: #cec4b3;
+  /* The only outline of a control — a field, an unticked box, a switch track.
+     A boundary, not a rule: WCAG 1.4.11 asks 3:1, and --line-strong is ~1.7:1.
+     Shared across the collection since 2026-11 (ship-stride-app skill). */
+  --edge-control: #958b7b;
 
   /* The accent: the road. Used for the wordmark and for the Adir+Or household. */
   --road: #2f6a8a;
@@ -45,6 +49,7 @@
     --ink-3: #a59c8d;
     --line: #302c27;
     --line-strong: #474139;
+    --edge-control: #7a7163;
     --road: #7fb3d1;
     --road-wash: #1f2c33;
     --lane: #d9a843;
@@ -78,7 +83,7 @@ input {
   font-size: max(16px, 1rem); /* below 16px Safari zooms on focus and never zooms back */
   color: var(--ink);
   background: var(--surface);
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--edge-control);
   border-radius: var(--radius-sm);
   min-height: 2.75rem;
   padding: 0.5rem 0.75rem;
