@@ -76,6 +76,9 @@ Works on iPhone from iOS 16.4, only when the app is opened from the home screen.
   - A trip added by hand that is already finished sends nothing.
   - The trigger POSTs through pg_net to the edge function `ride-notify` with an `x-ride-secret` header. Logging a trip never fails because of a notification.
 - **Send:** `supabase/functions/ride-notify` uses `npm:web-push` and sends to every subscription except the rider's own. Subscriptions answering 404/410 are deleted. Wording is in `messages.js`, which the app's tests import.
+- **Daily summary at 09:00 Israel time** goes to everyone: 💸 עד היום הפסדנו *total*, with each side's share and the days without a decision. It's the savings page's "lost so far", computed by the edge function (`dailyMessage` in `messages.js`; a test keeps it equal to `lib/core.js` to the agora). It stops once a decision date has passed.
+  - pg_cron job `ride-daily-summary` runs at 06:00 and 07:00 UTC. `ride.daily_summary()` sends only from the run that lands on 09:00 in Jerusalem, so it is right in summer and winter.
+  - `select ride.daily_summary(true)` sends one now.
 - **Secrets live in Supabase Vault:**
   - `ride_notify_secret` is generated in Postgres.
   - `ride_vapid_public` / `ride_vapid_private` were generated once by the function's `{"kind":"init"}`.

@@ -6,6 +6,7 @@
 //
 // Body: { kind: 'left' | 'returned', rider, car, trip_id }
 //     | { kind: 'test', endpoint }
+//     | { kind: 'daily' }  — the 09:00 summary of money lost so far, to everyone
 //     | { kind: 'init' }   — creates the VAPID pair once, stores it in Vault.
 import webpush from 'npm:web-push@3.6.7';
 import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
@@ -66,12 +67,21 @@ Deno.serve(async (req) => {
   if (!pub || !priv) return json({ error: 'no VAPID keys yet; call with {"kind":"init"}' }, 503);
   webpush.setVapidDetails(SUBJECT, pub, priv);
 
+  if (event.kind === 'daily') {
+    const { data: settings, error } = await db.from('settings').select('*').eq('id', 1).single();
+    if (error) return json({ error: error.message }, 500);
+    event.settings = settings;
+    event.today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
+    if (!messageFor(event)) return json({ ok: true, kind: 'daily', skipped: 'decision made; counter stopped' });
+  }
+
   const message = messageFor(event);
   const who = audience(event);
   if (!message || !who) return json({ error: 'unrecognised event' }, 400);
 
   let q = db.from('push_subscriptions').select('id, rider, endpoint, p256dh, auth');
-  q = 'endpoint' in who ? q.eq('endpoint', who.endpoint) : q.neq('rider', who.exceptRider);
+  if ('endpoint' in who) q = q.eq('endpoint', who.endpoint);
+  else if ('exceptRider' in who) q = q.neq('rider', who.exceptRider);
   const { data: subs, error } = await q;
   if (error) return json({ error: error.message }, 500);
 

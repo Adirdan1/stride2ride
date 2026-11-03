@@ -58,3 +58,42 @@ describe('push helpers', () => {
     expect(deviceLabel('')).toBe('דפדפן');
   });
 });
+
+describe('daily summary', async () => {
+  const { dailyMessage, lostSoFar: fnLost } = await import('../supabase/functions/ride-notify/messages.js');
+  const { lostSoFar } = await import('../lib/core.js');
+  const row = {
+    tracking_start: '2026-11-01', decision_date: null,
+    savings_home_agorot: 135200, savings_adi_agorot: 81600, capital_agorot: 2575000, annual_return_bp: 700,
+  };
+  const app = (r) => ({
+    trackingStart: r.tracking_start, decisionDate: r.decision_date,
+    savingsHomeAgorot: r.savings_home_agorot, savingsAdiAgorot: r.savings_adi_agorot,
+  });
+  it('matches the savings page to the agora, every day for two years and with a decision date', () => {
+    for (const decision of [null, '2027-03-15']) {
+      const r = { ...row, decision_date: decision };
+      for (let d = Date.UTC(2026, 9, 25); d < Date.UTC(2028, 10, 1); d += 86_400_000) {
+        const today = new Date(d).toISOString().slice(0, 10);
+        const a = fnLost(r, today);
+        const b = lostSoFar(app(r), today);
+        expect([a.days, a.home, a.adi, a.total, a.stopped]).toEqual([b.days, b.home, b.adi, b.total, b.stopped]);
+      }
+    }
+  });
+  it('says the total, then each side and the days', () => {
+    const m = dailyMessage(row, '2026-11-03');
+    expect(m.title).toBe('💸 עד היום הפסדנו 143 ₪');
+    expect(m.body).toBe('אדיר ואור 89 ₪ · עדי 54 ₪ · 2 ימים בלי החלטה');
+    expect(m.url).toBe('/savings');
+    expect(m.tag).toBe('ride-daily-2026-11-03');
+  });
+  it('stops once the decision date has passed', () => {
+    expect(dailyMessage({ ...row, decision_date: '2026-11-02' }, '2026-11-03')).toBeNull();
+    expect(dailyMessage({ ...row, decision_date: '2026-11-05' }, '2026-11-03')).not.toBeNull();
+  });
+  it('goes to everyone', () => {
+    expect(audience({ kind: 'daily' })).toEqual({ everyone: true });
+    expect(messageFor({ kind: 'daily', settings: row, today: '2026-11-03' }).title).toContain('143');
+  });
+});
