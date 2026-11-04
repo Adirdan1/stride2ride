@@ -12,7 +12,8 @@ Three screens:
 | `/` בית | who is out now; one big button, יצאתי מהבית / חזרתי הביתה (one tap — the car defaults to the household's own); a warning when the other household is out; my last five trips (tap to edit or delete), manual add |
 | `/usage` שימוש | the collision rate as the screen's figure; the household split as one bar with each person under it; today; the weekly timeline; every collision in the range |
 | `/savings` חיסכון | money lost so far and what each day without a decision adds; each side's part; a 5 and 10 year projection; the settings |
-| `/settings` (the bell) | notifications; the home-screen widget |
+| `/settings` (the bell) | notifications |
+| your name, top bar | the account sheet: copy your widget script (one tap, your own key), your keys and revoking them, switching who this phone is |
 
 Part of the Stride collection: see `ship-stride-app` in `Adirdan1/stride-skills`.
 
@@ -92,7 +93,7 @@ Works on iPhone from iOS 16.4, only when the app is opened from the home screen.
 split as a bar and the collision rate. A collision in progress is said in words
 and in red. Colours are `Color.dynamic` pairs, so it follows the phone's theme.
 
-- **Install:** the bell → *העתקת הסקריפט של …* copies the script with a key of
+- **Install:** tap your name in the top bar → *העתקת הסקריפט של …* copies the script with a key of
   your own on line 2. Scriptable → **+** → paste → name it `stride2ride`. Long-press
   the home screen → **+** → Scriptable → Small or Medium → Edit Widget → Script:
   `stride2ride`. The phone's copy does not update with the repo; a changed widget

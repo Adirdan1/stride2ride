@@ -56,7 +56,7 @@ try {
   ];
 
   const browser = await chromium.launch();
-  async function shoot(screen, path) {
+  async function shoot(screen, path, then) {
     for (const [look, opts] of Object.entries(LOOKS)) {
       const { grey, ...ctxOpts } = opts;
       const ctx = await browser.newContext(ctxOpts);
@@ -68,6 +68,7 @@ try {
       // put the bar and nav back in the flow, at the ends of the page where a scroll finds them.
       await page.addStyleTag({ content: '.nav, .bar { position: static !important; }' });
       if (grey) await page.addStyleTag({ content: 'html { filter: grayscale(1) }' });
+      if (then) await then(page);
       await sleep(300);
       const probe = await page.evaluate(() => {
         const vw = document.documentElement.clientWidth;
@@ -87,6 +88,8 @@ try {
   await shoot('usage', '/usage');
   await shoot('savings', '/savings');
   await shoot('settings', '/settings');
+  // The account sheet, where the widget is copied from.
+  await shoot('account', '/', async (page) => { await page.click('.bar .chip'); await page.waitForSelector('.sheet'); });
   // Adir leaves while Adi is out: a collision in progress.
   const leave = await fetch(`${BASE}/api/trips`, {
     method: 'POST',

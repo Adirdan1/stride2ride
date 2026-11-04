@@ -56,12 +56,16 @@ export default function WidgetSection({ me }) {
   }
 
   return (
-    <section className="card">
-      <h2 className="h2">ווידג׳ט למסך הבית</h2>
+    <section className="stack">
+      <h3 className="h2">ווידג׳ט למסך הבית</h3>
       <p className="muted small">מי בחוץ עכשיו, כמה הפסדנו עד היום, והחלוקה של החודש. נוגעים בו והאפליקציה נפתחת.</p>
-      <button className="btn btn--primary" disabled={busy} onClick={copy}>
-        העתקת הסקריפט של {USER_NAME[me]}
-      </button>
+      {/* One tap, nothing to set by hand; the name to save it under beside it. */}
+      <div className="copy-row">
+        <button className="btn btn--primary" disabled={busy} onClick={copy}>
+          העתקת הסקריפט של {USER_NAME[me]}
+        </button>
+        <span className="small">שומרים בשם <bdi dir="ltr" className="mono">stride2ride</bdi></span>
+      </div>
       {msg?.ok && <p className="muted" role="status">{msg.ok}</p>}
       {msg?.error && <p className="error" role="alert">{msg.error}</p>}
       {manual && (
