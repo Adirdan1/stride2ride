@@ -3,7 +3,7 @@ const API_KEY = "<paste your widget key>"; // the only line to edit
 
 // stride2ride — Scriptable home-screen widget. One self-contained file.
 //
-// Easiest: in stride2ride, tap the bell → "העתקת סקריפט הווידג׳ט". That copy
+// Easiest: in stride2ride, tap the bell → "העתקת הסקריפט של <your name>". That copy
 // already carries a key of your own on line 2. Or paste this and fill line 2.
 //
 // Install: Scriptable → + → paste this → name it "stride2ride".
