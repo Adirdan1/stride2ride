@@ -9,9 +9,11 @@ Three screens:
 
 | | |
 | --- | --- |
-| `/` בית | יצאתי מהבית / חזרתי הביתה, who is out now, my last five trips (tap to edit or delete), manual add |
-| `/usage` שימוש | collision rate, trips that hit a collision, the household split and the per-person breakdown, the weekly timeline, time when nobody was out, the list of collisions |
-| `/savings` חיסכון | money lost so far per side and in total, a 5 and 10 year projection, and the settings |
+| `/` בית | who is out now; one big button, יצאתי מהבית / חזרתי הביתה (one tap — the car defaults to the household's own); a warning when the other household is out; my last five trips (tap to edit or delete), manual add |
+| `/usage` שימוש | the collision rate as the screen's figure; the household split as one bar with each person under it; today; the weekly timeline; every collision in the range |
+| `/savings` חיסכון | money lost so far and what each day without a decision adds; each side's part; a 5 and 10 year projection; the settings |
+| `/settings` (the bell) | notifications |
+| your name, top bar | the account sheet: copy your widget script (one tap, your own key), your keys and revoking them, switching who this phone is |
 
 Part of the Stride collection: see `ship-stride-app` in `Adirdan1/stride-skills`.
 
@@ -83,3 +85,32 @@ Works on iPhone from iOS 16.4, only when the app is opened from the home screen.
   - `ride_notify_secret` is generated in Postgres.
   - `ride_vapid_public` / `ride_vapid_private` were generated once by the function's `{"kind":"init"}`.
   - If `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` are both set as edge function secrets, the function uses them instead. Changing keys invalidates every phone's subscription, so everyone must tap הפעל התראות again.
+
+## Widget (Scriptable)
+
+`scripts/widget.js` is the whole widget, one file. Small: who has the car (or
+"הרכב בבית"), since when, and the money lost so far. Medium adds this month's
+split as a bar and the collision rate. A collision in progress is said in words
+and in red. Colours are `Color.dynamic` pairs, so it follows the phone's theme.
+
+- **Install:** tap your name in the top bar → *העתקת הסקריפט של …* copies the script with a key of
+  your own on line 2. Scriptable → **+** → paste → name it `stride2ride`. Long-press
+  the home screen → **+** → Scriptable → Small or Medium → Edit Widget → Script:
+  `stride2ride`. The phone's copy does not update with the repo; a changed widget
+  means copying it again.
+- **Keys:** `ride.widget_keys` (migration 0006) holds one row per copied script,
+  naming the person, storing only the SHA-256. The same screen lists your keys and
+  revokes them. `GET /api/widget` takes the key as `x-api-key`, is exempt from the
+  PIN cookie, and returns `{ view }` shaped by `glance()` (core) and `widgetView()`
+  (format) — the widget only draws.
+- **Preview:** `npm run widget-preview -- <payload.json|offline|nokey|badkey> <small|medium> <light|dark>`
+  runs the real script against stubs of the Scriptable API and prints HTML.
+
+## Screenshots
+
+`npm run build && npm run shots` starts `scripts/fake-postgrest.mjs` seeded with the
+first real days of the log plus Adi out now, runs `next start` against it, and
+captures every screen in light, dark, greyscale and an iPhone 13 into
+`probe-out/shots/` (git-ignored), reporting horizontal overflow and any tap target
+under 44px. `test/palette.test.js` asserts contrast from the real `globals.css` in
+both themes.

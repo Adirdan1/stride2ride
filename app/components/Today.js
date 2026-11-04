@@ -25,7 +25,7 @@ export default function Today({ day, stats }) {
         <span className="tl-lane tl-lane--home"><Bars list={day.home} className="tl-bar tl-bar--home" /></span>
         <span className="tl-lane tl-lane--adi"><Bars list={day.adi} className="tl-bar tl-bar--adi" /></span>
         <Bars list={day.clash} className="tl-clash" />
-        {day.now != null && <span className="today__now" style={{ insetInlineStart: pct(day.now) }} aria-label="עכשיו" />}
+        {day.now != null && <span className="today__now" style={{ insetInlineStart: pct(day.now) }} role="img" aria-label="עכשיו" />}
       </div>
       <div className="tl-hours__track" aria-hidden="true">
         {[0, 6, 12, 18, 24].map((h) => (
@@ -33,13 +33,13 @@ export default function Today({ day, stats }) {
         ))}
       </div>
       {clashes.length === 0 ? (
-        <p className="muted small today__line">אין התנגשויות היום.</p>
+        <p className="muted small today__line">היום אין התנגשויות.</p>
       ) : (
-        <ul className="rows rows--static">
+        <ul className="tray tray--flat">
           {clashes.map((c) => (
-            <li key={c.s} className="row row--clash">
-              <span className="row__main">{timeWindow(c.s, c.e)}</span>
-              <span className="row__side">{names(c.users)}</span>
+            <li key={c.s} className="trip trip--clash">
+              <span className="trip__main">{timeWindow(c.s, c.e)}</span>
+              <span className="trip__side">{names(c.users)}</span>
             </li>
           ))}
         </ul>

@@ -1,15 +1,36 @@
-// Generates the home-screen icons from code: the collection's climb — four
-// rising bars, the tallest live — with this app's summit, a wheel.
+// The home-screen icons, generated from code so the palette lives in one file.
+//
+//   npm run icons
+//
+// THE CLIMB is the family's mark, not this app's: four rising bars, the
+// tallest live, topped by a summit that says what the app is climbing towards.
+// The bars below are Stride's numbers, copied rather than re-derived, so "the
+// same bars" is a fact (ship-stride-app, Design language). Only the summit and
+// the palette are stride2ride's.
+//
+// Redesign, 2026-11-03: the old icon drew its own climb — wider bars (0.12),
+// shorter heights (0.16–0.40), a wheel of r 0.15 that swallowed the live bar,
+// on the shared ink ground. Beside its siblings at 60px it read as a wheel
+// with a bar chart behind it rather than as a sibling. Now it is Stride's
+// climb on a road-tinted near-black, with a wheel the size of every other
+// summit (r 0.078) sunk into the live bar the way Stride's flame is.
+//
 // PNG is encoded by hand with node:zlib; shapes are predicates sampled 4×4 per pixel.
 import { deflateSync } from 'node:zlib';
 import { writeFileSync } from 'node:fs';
 
-const GROUND = [0x1b, 0x1a, 0x17];   // --ink
-const BAR = [0x57, 0x53, 0x4b];      // --ink-2
-const LIVE = [0x7f, 0xb3, 0xd1];     // the road, at its bright illustration value
-const TYRE = [0xf7, 0xf4, 0xee];     // --paper
-const RIM = [0xd9, 0xa8, 0x43];      // a different tone from the bar, so the layers don't fuse
-const HUB = [0x1b, 0x1a, 0x17];
+// Palette roles as Stride defines them: GROUND is the app's paper with the
+// lights off; SPENT recessed but never invisible; LIVE the accent; the summit a
+// brighter step up from LIVE, so the eye travels to the top and the two layers
+// do not fuse.
+const GROUND = [0x12, 0x19, 0x1e]; // the road at night
+const SPENT = [0x37, 0x47, 0x52];
+const LIVE = [0x5b, 0x9a, 0xbf];   // the road, at its illustration value
+const TYRE = [0xd6, 0xe8, 0xf2];   // the summit: a step paler than the live bar
+const HUB = [0xf2, 0xc2, 0x4e];    // the hub and spokes: warm, so the wheel has a centre at 60px
+// The wheel's well is the ground showing through, so the tyre reads as a ring
+// rather than a dot — the same trick as stride2palette's thumb hole.
+const WELL = GROUND;
 
 const crcTable = Array.from({ length: 256 }, (_, n) => {
   let c = n;
@@ -39,11 +60,12 @@ function png(size, pixel) {
   }
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(size, 0); ihdr.writeUInt32BE(size, 4);
-  ihdr[8] = 8; ihdr[9] = 2; ihdr[10] = 0; ihdr[11] = 0; ihdr[12] = 0;
-  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
+  ihdr[8] = 8; ihdr[9] = 2;
+  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw, { level: 9 })), chunk('IEND', Buffer.alloc(0))]);
 }
 
-const roundRect = (x0, y0, x1, y1, r) => (x, y) => {
+const roundRect = (x0, y0, w, h, r) => (x, y) => {
+  const x1 = x0 + w, y1 = y0 + h;
   if (x < x0 || x > x1 || y < y0 || y > y1) return false;
   const cx = Math.min(Math.max(x, x0 + r), x1 - r);
   const cy = Math.min(Math.max(y, y0 + r), y1 - r);
@@ -51,53 +73,64 @@ const roundRect = (x0, y0, x1, y1, r) => (x, y) => {
 };
 const circle = (cx, cy, r) => (x, y) => (x - cx) ** 2 + (y - cy) ** 2 <= r * r;
 
-// scale < 1 shrinks the drawing into the maskable safe zone.
-function drawing(scale) {
-  const t = (v) => 0.5 + (v - 0.5) * scale;
-  const s = (v) => v * scale;
-  const w = 0.12, gap = 0.045, base = 0.82;
-  const heights = [0.16, 0.26, 0.36, 0.40];
-  const x0 = 0.5 - (4 * w + 3 * gap) / 2;
-  const bars = heights.map((h, i) => {
-    const xa = x0 + i * (w + gap);
-    return roundRect(t(xa), t(base - h), t(xa + w), t(base), s(0.025));
-  });
-  // The summit sinks into the live bar, so there is no lollipop waist.
-  const liveX = x0 + 3 * (w + gap) + w / 2;
-  const cy = base - heights[3] - 0.03;
-  const R = 0.15;
-  const cx = liveX - 0.03;
-  const tyre = circle(t(cx), t(cy), s(R));
-  const rimOuter = circle(t(cx), t(cy), s(R * 0.74));
-  const rimInner = circle(t(cx), t(cy), s(R * 0.6));
-  const hub = circle(t(cx), t(cy), s(R * 0.2));
-  // Five spokes: what turns a disc into a wheel.
+// Stride's climb, in a 0–1 square.
+const BAR_W = 0.105;
+const BAR_GAP = 0.055;
+const HEIGHTS = [0.20, 0.30, 0.40, 0.52];
+const RADIUS = 0.032;
+const BASELINE = 0.82;
+// The family's summit size (Stride #7, stride2wealth #7): smaller reads as an
+// accessory of the bar rather than its subject.
+const R = 0.094;
+
+// inset > 0 pulls the mark into the maskable safe zone.
+export function drawing(inset = 0) {
+  const k = 1 - inset * 2;
+  const at = (v) => inset + v * k;
+  const spanW = HEIGHTS.length * BAR_W + (HEIGHTS.length - 1) * BAR_GAP;
+  const startX = (1 - spanW) / 2;
+  const bars = HEIGHTS.map((h, i) => roundRect(at(startX + i * (BAR_W + BAR_GAP)), at(BASELINE - h), BAR_W * k, h * k, RADIUS * k));
+  const cx = at(startX + 3 * (BAR_W + BAR_GAP) + BAR_W / 2);
+  // Sunk into the live bar, as Stride's flame is, so there is no lollipop waist.
+  const cy = at(BASELINE - HEIGHTS[3] - R * 0.42);
+  const r = R * k;
+  const tyre = circle(cx, cy, r);
+  const well = circle(cx, cy, r * 0.7);
+  const hub = circle(cx, cy, r * 0.22);
+  // Three spokes, hub to tyre: what makes a ring a wheel rather than a donut.
+  // Three, not five — five closed up into a disc at 60px.
   const spoke = (x, y) => {
-    const dx = x - t(cx), dy = y - t(cy);
-    const a = Math.atan2(dy, dx);
-    const r = Math.hypot(dx, dy);
-    for (let k = 0; k < 5; k++) {
-      const th = -Math.PI / 2 + (k * 2 * Math.PI) / 5;
-      let d = a - th;
-      d = Math.atan2(Math.sin(d), Math.cos(d));
-      if (Math.abs(d) < Math.PI / 2 && Math.abs(r * Math.sin(d)) < s(R * 0.09)) return true;
+    const dx = x - cx, dy = y - cy;
+    for (let s = 0; s < 5; s++) {
+      const th = -Math.PI / 2 + (s * 2 * Math.PI) / 5;
+      const along = dx * Math.cos(th) + dy * Math.sin(th);
+      const across = -dx * Math.sin(th) + dy * Math.cos(th);
+      if (along > 0 && Math.abs(across) < r * 0.09) return true;
     }
     return false;
   };
   return (x, y) => {
-    if (hub(x, y)) return RIM;
-    if (rimInner(x, y)) return spoke(x, y) ? RIM : HUB;
-    if (rimOuter(x, y)) return RIM;
-    if (tyre(x, y)) return TYRE;
+    if (tyre(x, y)) {
+      if (hub(x, y)) return HUB;
+      if (well(x, y)) return spoke(x, y) ? WELL : HUB;
+      return TYRE;
+    }
     if (bars[3](x, y)) return LIVE;
-    for (let i = 0; i < 3; i++) if (bars[i](x, y)) return BAR;
+    for (let i = 0; i < 3; i++) if (bars[i](x, y)) return SPENT;
     return GROUND;
   };
 }
 
-const out = (name, size, scale) => writeFileSync(new URL(`../public/${name}`, import.meta.url), png(size, drawing(scale)));
-out('icon-192.png', 192, 1);
-out('icon-512.png', 512, 1);
-out('apple-icon.png', 180, 1);
-out('icon-maskable-512.png', 512, 0.78);
-console.log('icons written');
+export function render(size, inset = 0) {
+  return png(size, drawing(inset));
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const out = (name, size, inset) => writeFileSync(new URL(`../public/${name}`, import.meta.url), render(size, inset));
+  // Full bleed: iOS rounds the corners itself.
+  out('icon-192.png', 192, 0);
+  out('icon-512.png', 512, 0);
+  out('apple-icon.png', 180, 0);
+  out('icon-maskable-512.png', 512, 0.1);
+  console.log('icons written');
+}
