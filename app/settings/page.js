@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import Shell from '../components/Shell';
 import { MeChip, WhoAmI } from '../components/Me';
 import Notifications from '../components/Notifications';
+import WidgetSection from '../components/WidgetSection';
 import { isUser } from '@/lib/core';
 
 export const dynamic = 'force-dynamic';
@@ -19,6 +20,7 @@ export default async function Settings() {
     <Shell current="/settings" aside={<MeChip me={me} />}>
       <h1 className="title">הגדרות</h1>
       <Notifications me={me} />
+      <WidgetSection me={me} />
     </Shell>
   );
 }

@@ -14,49 +14,55 @@ export default async function Savings() {
   const today = localDate(Date.now());
   const lost = lostSoFar(s, today);
   const [p5, p10] = projections(s);
-  const monthly = s.savingsHomeAgorot + s.savingsAdiAgorot;
+
+  const perDay = Math.round(lost.perDay.home + lost.perDay.adi);
 
   return (
     <Shell current="/savings" aside={isUser(me) ? <MeChip me={me} /> : null}>
-      <section className="hero">
+      <section className={`hero${lost.stopped ? '' : ' hero--ticking'}`}>
         <span className="hero__label">{lost.stopped ? 'הפסדנו עד ההחלטה' : 'הפסדנו עד היום'}</span>
         <span className="hero__value">{shekels(lost.total)}</span>
         <span className="hero__sub">
-          {lost.days} ימים מאז {dateLabel(s.trackingStart)}
-          {lost.stopped ? ` · הוחלט ב־${dateLabel(s.decisionDate)}, המונה נעצר` : ` · כל חודש של המתנה: ${shekels(monthly)}`}
+          {lost.stopped
+            ? `הוחלט ב־${dateLabel(s.decisionDate)}, המונה נעצר`
+            : `עוד ${shekels(perDay)} כל יום בלי החלטה`}
         </span>
+        <span className="hero__sub">{lost.days} ימים מאז {dateLabel(s.trackingStart)}</span>
       </section>
 
-      <section className="sides">
-        <div className="side side--home">
-          <span className="side__name">{SIDE_NAME.home}</span>
-          <span className="side__value">{shekels(lost.home)}</span>
-          <span className="side__sub">{shekels(s.savingsHomeAgorot)} בחודש</span>
+      {/* Each side's part of it. Same form as the usage split: the house's rule
+          solid, Adi's dashed, so the two read apart in greyscale. */}
+      <section className="strip" aria-label="לפי צד">
+        <div className="strip__cell strip__cell--home">
+          <span className="strip__name">{SIDE_NAME.home}</span>
+          <span className="strip__value">{shekels(lost.home)}</span>
+          <span className="strip__sub">{shekels(s.savingsHomeAgorot)} בחודש</span>
         </div>
-        <div className="side side--adi">
-          <span className="side__name">{SIDE_NAME.adi}</span>
-          <span className="side__value">{shekels(lost.adi)}</span>
-          <span className="side__sub">{shekels(s.savingsAdiAgorot)} בחודש</span>
+        <div className="strip__cell strip__cell--adi">
+          <span className="strip__name">{SIDE_NAME.adi}</span>
+          <span className="strip__value">{shekels(lost.adi)}</span>
+          <span className="strip__sub">{shekels(s.savingsAdiAgorot)} בחודש</span>
         </div>
       </section>
 
-      <section className="projection">
+      <section className="stack">
+        <h2 className="h2">מה זה שווה לאורך זמן</h2>
         <p className="muted small">
           אם משקיעים את החיסכון החודשי ואת ההון שמתפנה ({shekels(s.capitalAgorot)} לכל צד) בתשואה של {s.annualReturnBp / 100}% בשנה:
         </p>
-        <ul className="projection__rows">
+        <ul className="tray">
           {[p5, p10].map((p) => (
-            <li key={p.years}>
-              <span>בעוד {p.years} שנים</span>
-              <strong>{shekels(p.total)}</strong>
-              <small className="muted">{SIDE_NAME.home} {shekels(p.home)} · {SIDE_NAME.adi} {shekels(p.adi)}</small>
+            <li key={p.years} className="proj">
+              <span className="proj__when">בעוד {p.years} שנים</span>
+              <strong className="proj__total">{shekels(p.total)}</strong>
+              <small className="proj__split">{SIDE_NAME.home} {shekels(p.home)} · {SIDE_NAME.adi} {shekels(p.adi)}</small>
             </li>
           ))}
         </ul>
       </section>
 
-      <details className="card settings">
-        <summary className="h2">הגדרות</summary>
+      <details className="tray settings">
+        <summary className="h2">הגדרות החישוב</summary>
         <SettingsForm settings={s} />
       </details>
     </Shell>

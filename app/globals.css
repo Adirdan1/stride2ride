@@ -78,7 +78,7 @@ a, button, summary, label, input { touch-action: manipulation; }
 a { color: inherit; }
 button { font: inherit; color: inherit; }
 
-input {
+input, textarea {
   font: inherit;
   font-size: max(16px, 1rem); /* below 16px Safari zooms on focus and never zooms back */
   color: var(--ink);
@@ -90,7 +90,8 @@ input {
   inline-size: 100%;
   scroll-margin-block: 6rem;
 }
-input:focus-visible { outline: 2px solid var(--road); outline-offset: 1px; }
+input:focus-visible, textarea:focus-visible { outline: 2px solid var(--road); outline-offset: 1px; }
+:where(a, button, summary):focus-visible { outline: 2px solid var(--road); outline-offset: 2px; }
 
 .muted { color: var(--ink-3); }
 .small { font-size: 0.85rem; }
@@ -157,7 +158,7 @@ input:focus-visible { outline: 2px solid var(--road); outline-offset: 1px; }
   min-height: 2.75rem;
   padding: 0.5rem 1.1rem;
   border-radius: var(--radius);
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--edge-control);
   background: var(--surface);
   font-weight: 500;
   cursor: pointer;
@@ -170,7 +171,12 @@ input:focus-visible { outline: 2px solid var(--road); outline-offset: 1px; }
 /* The one thing used daily: as big as the thumb could want. */
 .btn--hero {
   inline-size: 100%;
-  min-height: 9rem;
+  min-height: 9.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
   border-radius: var(--radius-lg);
   font-family: var(--font-head);
   font-size: 2rem;
@@ -183,17 +189,22 @@ input:focus-visible { outline: 2px solid var(--road); outline-offset: 1px; }
 /* Returning is hollow: the trip is open, the car is out. */
 .btn--return { background: var(--surface); color: var(--ink); border: 3px solid var(--ink); }
 .btn--hero:active:not(:disabled) { transform: scale(0.985); }
+.btn--hero:disabled { opacity: 1; cursor: progress; }
+.btn--hero[aria-busy='true'] > :first-child { opacity: 0.6; }
+.btn--hero__sub { font-family: var(--font-ui); font-size: 1rem; font-weight: 400; font-variant-numeric: tabular-nums; }
+.btn--return .btn--hero__sub { color: var(--ink-2); }
 
 .chip {
   min-height: 2.75rem;
   padding: 0 1rem;
   border-radius: var(--radius-pill);
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--edge-control);
   background: var(--surface);
   font-weight: 500;
   cursor: pointer;
 }
 
+.link--danger { color: var(--break); }
 .link {
   background: none;
   border: none;
@@ -272,15 +283,12 @@ input:focus-visible { outline: 2px solid var(--road); outline-offset: 1px; }
 .status {
   display: flex;
   align-items: center;
-  gap: 0.9rem;
-  padding: 0.85rem var(--pad);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  border: 1px dashed var(--line-strong);
+  gap: 0.8rem;
+  padding: 0.25rem 0;
 }
-.status--out { border-style: solid; border-color: var(--ink); }
-.status__text { display: flex; flex-direction: column; gap: 0.1rem; }
-.status__text strong { font-size: 1.1rem; }
+.status__text { display: flex; flex-direction: column; gap: 0.15rem; }
+.status__text strong { font-size: 1.15rem; }
+.status--out .who { font-size: 1.1rem; font-weight: 700; }
 .who { font-weight: 500; }
 .who--home { color: var(--road); }
 .who--adi { color: var(--lane); }
@@ -288,39 +296,55 @@ input:focus-visible { outline: 2px solid var(--road); outline-offset: 1px; }
 .action { display: flex; flex-direction: column; gap: 0.6rem; text-align: center; }
 .action__note { margin: 0; color: var(--ink-2); font-size: 1.05rem; }
 .action__note strong { color: var(--ink); }
-.action__note--clash {
+.action__note { font-size: 0.95rem; }
+/* Something is about to go wrong: wine on its wash, with a rule down the
+   leading edge, so it reads in greyscale as well as in red. */
+.alert {
+  margin: 0;
   color: var(--break);
-  font-weight: 500;
   background: var(--break-wash);
   border-inline-start: var(--spine) solid var(--break);
   border-radius: var(--radius-sm);
-  padding: 0.5rem 0.75rem;
+  padding: 0.6rem 0.8rem;
   text-align: start;
+  line-height: 1.4;
 }
 
 .recent { display: flex; flex-direction: column; gap: 0.25rem; }
 
-.rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
-.row {
+/* A list is one tray divided by rules, not a stack of cards. */
+.tray {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.tray > li + li { border-block-start: 1px solid var(--line); }
+.tray--flat { background: transparent; border-radius: var(--radius); }
+.trip {
   inline-size: 100%;
-  min-height: 3rem;
+  min-height: 3.25rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.55rem 0.9rem;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-inline-start: var(--spine) solid var(--line-strong);
-  border-radius: var(--radius);
+  padding: 0.6rem 0.9rem;
+  background: transparent;
+  border: none;
+  border-inline-start: var(--spine) solid transparent;
   text-align: start;
-  cursor: pointer;
 }
-.rows--static .row { cursor: default; }
-.row--open { border-inline-start-style: dashed; border-inline-start-color: var(--ink); }
-.row--clash { border-inline-start-color: var(--break); background: var(--break-wash); border-color: transparent; }
-.row__main { font-variant-numeric: tabular-nums; }
-.row__side { color: var(--ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 0.6rem; }
+button.trip { cursor: pointer; }
+/* Still out: dashed spine, as the timeline's open bar. */
+.trip--open { border-inline-start: var(--spine) dashed var(--ink); }
+.trip--clash { border-inline-start-color: var(--break); background: var(--break-wash); color: var(--ink); }
+.trip--clash .trip__side { color: var(--break); font-weight: 500; }
+.trip__main { display: flex; flex-direction: column; gap: 0.1rem; align-items: flex-start; font-variant-numeric: tabular-nums; }
+.trip__side { color: var(--ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.stack { display: flex; flex-direction: column; gap: 0.5rem; }
 
 /* ─── cars ──────────────────────────────────────────────────────────────── */
 /* The cars' paint, as illustration colours rather than text colours. */
@@ -329,19 +353,19 @@ input:focus-visible { outline: 2px solid var(--road); outline-offset: 1px; }
 .cars { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
 .car {
   min-height: 2.75rem;
+  font-size: 0.95rem;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   padding: 0.4rem 0.6rem;
   border-radius: var(--radius);
-  border: 1px dashed var(--line-strong);
+  border: 1px dashed var(--edge-control);
   background: transparent;
   color: var(--ink-2);
   cursor: pointer;
 }
 .car[aria-checked='true'] { border: 2px solid var(--ink); background: var(--surface); color: var(--ink); font-weight: 600; }
-.row__main--stack { display: flex; flex-direction: column; gap: 0.1rem; align-items: flex-start; }
 .who-line { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 .car__dot { inline-size: 0.8rem; block-size: 0.8rem; border-radius: 50%; flex: none; display: inline-block; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18); }
 .car__dot--star { background: var(--paint-star); }
@@ -376,25 +400,23 @@ input:focus-visible { outline: 2px solid var(--road); outline-offset: 1px; }
 
 /* ─── usage ─────────────────────────────────────────────────────────────── */
 
-.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
-.stat {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  padding: 0.85rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-.stat--clash { border-inline-start: var(--spine) solid var(--break); }
-.stat__value { font-family: var(--font-head); font-size: 1.9rem; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
-.stat--clash .stat__value { color: var(--break); }
-.stat__sep { color: var(--ink-3); }
-.stat__value--pair { font-size: 1.5rem; white-space: nowrap; }
-.stat__label { font-size: 0.85rem; color: var(--ink-2); line-height: 1.3; }
-.stat__sub { font-size: 0.85rem; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 .ink-home { color: var(--road); }
 .ink-adi { color: var(--lane); }
+
+/* Each side's share: one road with two lanes. The house solid, Adi striped,
+   a hair of paper between them — told apart by texture before colour. */
+.split { padding: var(--pad); display: flex; flex-direction: column; gap: 0.75rem; }
+.split__head { display: flex; justify-content: space-between; gap: 1rem; }
+.split__side { display: flex; flex-direction: column; gap: 0.05rem; font-weight: 500; }
+.split__side small { color: var(--ink-2); font-weight: 400; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.split__side--end { align-items: flex-end; text-align: end; }
+.split__pct { font-family: var(--font-head); font-size: 2rem; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.split__bar { display: flex; gap: 3px; block-size: 0.9rem; }
+.split__fill { display: block; block-size: 100%; border-radius: 3px; min-inline-size: 3px; }
+.split__fill--home { background: var(--road); }
+.split__fill--adi { background: repeating-linear-gradient(135deg, var(--lane) 0 3px, color-mix(in srgb, var(--lane) 45%, transparent) 3px 5px); }
+.split .bars { border-block-start: 1px solid var(--line); padding-block-start: 0.75rem; }
+.split p { margin: 0; line-height: 1.45; }
 
 /* The weekly timeline is the main visual: plain divs. */
 .timeline__head { display: flex; align-items: center; justify-content: space-between; }
@@ -462,37 +484,31 @@ input:focus-visible { outline: 2px solid var(--road); outline-offset: 1px; }
 
 /* ─── savings ───────────────────────────────────────────────────────────── */
 
-.hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.25rem; padding: 1.5rem 0 0.5rem; }
-.hero__label { color: var(--ink-2); font-weight: 500; }
-.hero__value { font-family: var(--font-head); font-size: 3.2rem; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums; }
-.hero__sub { color: var(--ink-3); font-size: 0.9rem; }
+/* A screen's figure sits on the paper, not in a card: biggest by size alone. */
+.hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.3rem; padding: 1.25rem 0 0.5rem; }
+.hero__label { color: var(--ink-2); font-weight: 500; max-inline-size: 21rem; text-wrap: balance; line-height: 1.35; }
+.hero__value { font-family: var(--font-head); font-size: clamp(3.25rem, 17vw, 4.25rem); font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.hero--clash .hero__value { color: var(--break); }
+.hero__sub { color: var(--ink-2); font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+.hero__sub + .hero__sub { color: var(--ink-3); font-size: 0.85rem; }
 
-.sides { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
-.side {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-block-start: 4px solid var(--road);
-  border-radius: var(--radius-lg);
-  padding: 0.85rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-.side--adi { border-block-start-style: dashed; border-block-start-color: var(--lane); }
-.side__name { font-weight: 600; color: var(--ink-2); }
-.side__value { font-family: var(--font-head); font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-.side__sub { font-size: 0.85rem; color: var(--ink-3); }
+/* Two sides of one figure: a ruled strip, the house's rule solid, Adi's dashed. */
+.strip { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.strip__cell { display: flex; flex-direction: column; gap: 0.1rem; padding-block-start: 0.6rem; border-block-start: 4px solid var(--road); }
+.strip__cell--adi { border-block-start-style: dashed; border-block-start-color: var(--lane); }
+.strip__name { font-weight: 500; color: var(--ink-2); }
+.strip__value { font-family: var(--font-head); font-size: 1.75rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.strip__sub { font-size: 0.85rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 
-.projection { display: flex; flex-direction: column; gap: 0.4rem; }
-.projection p { margin: 0; line-height: 1.45; }
-.projection__rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
-.projection__rows li { display: grid; grid-template-columns: auto 1fr; gap: 0 0.6rem; align-items: baseline; }
-.projection__rows strong { font-variant-numeric: tabular-nums; }
-.projection__rows small { grid-column: 1 / -1; }
+.proj { display: grid; grid-template-columns: 1fr auto; gap: 0.1rem 0.75rem; align-items: baseline; padding: 0.75rem 0.9rem; }
+.proj__total { font-family: var(--font-head); font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+.proj__split { grid-column: 1 / -1; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 
-.settings summary { min-height: 2.75rem; display: flex; align-items: center; cursor: pointer; list-style: none; }
+.settings { padding: 0 var(--pad); }
+.settings[open] { padding-block-end: var(--pad); }
+.settings summary { min-height: 3rem; display: flex; align-items: center; cursor: pointer; list-style: none; }
 .settings summary::-webkit-details-marker { display: none; }
-.settings summary::after { content: '▾'; margin-inline-start: auto; color: var(--ink-3); }
+.settings summary::after { content: '▾'; margin-inline-start: auto; color: var(--ink-2); }
 .settings[open] summary::after { content: '▴'; }
 
 /* ─── the mark ──────────────────────────────────────────────────────────── */
@@ -516,7 +532,7 @@ input:focus-visible { outline: 2px solid var(--road); outline-offset: 1px; }
 
 .skeleton { background: var(--sunken); border-radius: var(--radius-lg); }
 .skeleton--bar { block-size: 2.75rem; }
-.skeleton--hero { block-size: 9rem; }
+.skeleton--hero { block-size: 9.5rem; }
 .skeleton--row { block-size: 3rem; border-radius: var(--radius); }
 
 /* ─── settings ──────────────────────────────────────────────────────────── */
@@ -539,3 +555,8 @@ input:focus-visible { outline: 2px solid var(--road); outline-offset: 1px; }
   color: var(--ink-2);
   line-height: 1.45;
 }
+
+/* ─── widget ────────────────────────────────────────────────────────────── */
+
+.steps { margin: 0; padding-inline-start: 1.25rem; display: flex; flex-direction: column; gap: 0.3rem; color: var(--ink-2); line-height: 1.45; }
+.script { font-family: ui-monospace, monospace; font-size: max(16px, 1rem); min-height: 8rem; resize: vertical; text-align: left; }

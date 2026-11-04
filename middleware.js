@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { AUTH_COOKIE, verifyToken } from './lib/auth.js';
 
-const OPEN = ['/unlock', '/api/unlock', '/manifest.webmanifest', '/sw.js'];
+// /api/widget checks its own key: a widget has a key but no cookie.
+const OPEN = ['/unlock', '/api/unlock', '/api/widget', '/manifest.webmanifest', '/sw.js'];
 
 export async function middleware(req) {
   const { pathname } = req.nextUrl;

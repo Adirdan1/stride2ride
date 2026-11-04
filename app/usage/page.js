@@ -40,10 +40,10 @@ export default async function Usage({ searchParams }) {
     return s ? `/usage?${s}` : '/usage';
   };
 
+  const maxUser = Math.max(...USERS.map((x) => r.perUser[x]), 1);
+
   return (
     <Shell current="/usage" aside={isUser(me) ? <MeChip me={me} /> : null}>
-      <Today day={todayDay} stats={todayStats} />
-
       <nav className="segmented" aria-label="טווח">
         {RANGES.map((x) => (
           <Link key={x.key} href={q({ r: x.key })} className="segmented__item" aria-current={x.key === range ? 'true' : undefined}>
@@ -55,71 +55,71 @@ export default async function Usage({ searchParams }) {
       {r.tripCount === 0 ? (
         <p className="muted empty">אין נסיעות בטווח הזה עדיין.</p>
       ) : (
-        <section className="stats">
-          <div className="stat stat--clash">
-            <span className="stat__value">{percent(r.collisionRate)}</span>
-            <span className="stat__label">מהזמן שהרכב בחוץ היה התנגשות</span>
-            <span className="stat__sub">{hours(r.collisionMs)} · {r.collisionTripCount} נסיעות נפגעו</span>
-          </div>
-          <div className="stat">
-            <span className="stat__value stat__value--pair">
-              <span className="ink-home">{r.share.home}%</span>
-              <span className="stat__sep"> / </span>
-              <span className="ink-adi">{r.share.adi}%</span>
-            </span>
-            <span className="stat__label">חלוקת השימוש: {SIDE_NAME.home} / {SIDE_NAME.adi}</span>
-            <span className="stat__sub">{hours(r.perSide.home)} / {hours(r.perSide.adi)}</span>
-          </div>
-        </section>
-      )}
-
-      <Timeline grid={grid} week={week} prevHref={q({ w: String(week - 1) })} nextHref={week < 0 ? q({ w: String(week + 1) }) : null} />
-
-      {r.tripCount > 0 && (
         <>
-          <section className="card">
-            <h2 className="h2">לפי אדם</h2>
+          {/* The question this screen answers: how often did we both need it? */}
+          <section className={`hero${r.collisionMs > 0 ? ' hero--clash' : ''}`}>
+            <span className="hero__value">{percent(r.collisionRate)}</span>
+            <span className="hero__label">מהזמן שהרכב בחוץ, שני הבתים היו צריכים אותו</span>
+            <span className="hero__sub">
+              {r.collisionMs > 0
+                ? `${hours(r.collisionMs)} של התנגשות · ${r.collisionTripCount} נסיעות נפגעו`
+                : 'אף נסיעה לא התנגשה בטווח הזה'}
+            </span>
+          </section>
+
+          {/* Each side's share: one road, two lanes. Home solid, Adi striped. */}
+          <section className="tray split">
+            <div className="split__head">
+              <span className="split__side">
+                <span className="split__pct ink-home">{r.share.home}%</span>
+                <span>{SIDE_NAME.home}</span>
+                <small>{hours(r.perSide.home)}</small>
+              </span>
+              <span className="split__side split__side--end">
+                <span className="split__pct ink-adi">{r.share.adi}%</span>
+                <span>{SIDE_NAME.adi}</span>
+                <small>{hours(r.perSide.adi)}</small>
+              </span>
+            </div>
+            <div className="split__bar" role="img" aria-label={`${SIDE_NAME.home} ${r.share.home}%, ${SIDE_NAME.adi} ${r.share.adi}%`}>
+              <span className="split__fill split__fill--home" style={{ inlineSize: `${r.share.home}%` }} />
+              <span className="split__fill split__fill--adi" style={{ inlineSize: `${r.share.adi}%` }} />
+            </div>
             <ul className="bars">
               {USERS.map((u) => {
                 const side = USERS_OF.home.includes(u) ? 'home' : 'adi';
-                const max = Math.max(...USERS.map((x) => r.perUser[x]), 1);
                 return (
                   <li key={u} className="bars__row">
                     <span className="bars__name">{USER_NAME[u]}</span>
                     <span className="bars__track">
-                      <span className={`bars__fill bars__fill--${side}`} style={{ inlineSize: `${(r.perUser[u] / max) * 100}%` }} />
+                      <span className={`bars__fill bars__fill--${side}`} style={{ inlineSize: `${(r.perUser[u] / maxUser) * 100}%` }} />
                     </span>
                     <span className="bars__value">{hours(r.perUser[u])}</span>
                   </li>
                 );
               })}
             </ul>
-            <p className="muted small">כשאדיר ואור בחוץ באותו זמן זה נספר פעם אחת לבית.</p>
-          </section>
-
-          <section className="card">
-            <h2 className="h2">זמן שאף אחד לא בחוץ</h2>
-            <p className="big-line">
-              {hours(r.gapMs)} <span className="muted">מתוך {hours(r.windowMs)} ({percent(r.windowMs ? r.gapMs / r.windowMs : 0)})</span>
-            </p>
-          </section>
-
-          <section className="card">
-            <h2 className="h2">התנגשויות</h2>
-            {r.collisions.length === 0 ? (
-              <p className="muted">אין התנגשויות בטווח הזה.</p>
-            ) : (
-              <ul className="rows rows--static">
-                {[...r.collisions].reverse().map((c) => (
-                  <li key={c.s} className="row row--clash">
-                    <span className="row__main">{timeWindow(c.s, c.e)}</span>
-                    <span className="row__side">{names(c.users)}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <p className="muted small">כשאדיר ואור בחוץ יחד, זה נספר פעם אחת לבית. הרכב עמד בבית {percent(r.windowMs ? r.gapMs / r.windowMs : 0)} מהזמן.</p>
           </section>
         </>
+      )}
+
+      <Today day={todayDay} stats={todayStats} />
+
+      <Timeline grid={grid} week={week} prevHref={q({ w: String(week - 1) })} nextHref={week < 0 ? q({ w: String(week + 1) }) : null} />
+
+      {r.collisions.length > 0 && (
+        <section className="stack">
+          <h2 className="h2">כל ההתנגשויות בטווח</h2>
+          <ul className="tray">
+            {[...r.collisions].reverse().map((c) => (
+              <li key={c.s} className="trip trip--clash">
+                <span className="trip__main">{timeWindow(c.s, c.e)}</span>
+                <span className="trip__side">{names(c.users)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </Shell>
   );

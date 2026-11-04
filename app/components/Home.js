@@ -53,19 +53,17 @@ export default function Home({ me, now: serverNow, open, out, recent }) {
 
   return (
     <>
+      {/* Who has a car right now, on the paper: a line, not a card. */}
       <section className={`status${anyoneOut ? ' status--out' : ''}`} aria-live="polite">
-        <Wheel moving={anyoneOut} />
+        <Wheel moving={anyoneOut} size={34} />
         <div className="status__text">
           {anyoneOut ? (
-            <>
-              <strong>בחוץ עכשיו</strong>
-              {out.map((o) => (
-                <span key={o.user} className="who-line">
-                  <span className={`who who--${SIDE_OF[o.user]}`}>{USER_NAME[o.user]} מ־{clock(o.since)}</span>
-                  <CarTag car={o.car} />
-                </span>
-              ))}
-            </>
+            out.map((o) => (
+              <span key={o.user} className="who-line">
+                <span className={`who who--${SIDE_OF[o.user]}`}>{USER_NAME[o.user]} בחוץ מ־{clock(o.since)}</span>
+                <CarTag car={o.car} />
+              </span>
+            ))
           ) : (
             <>
               <strong>הרכב בבית</strong>
@@ -76,30 +74,36 @@ export default function Home({ me, now: serverNow, open, out, recent }) {
       </section>
 
       <section className="action">
+        {otherSide.length > 0 && (
+          <p className="alert" role="status">
+            <strong>{otherSide.map((o) => USER_NAME[o.user]).join(' ו')} בחוץ.</strong>{' '}
+            {open ? 'זו התנגשות כרגע: שני הבתים צריכים רכב.' : 'יציאה עכשיו תיספר כהתנגשות.'}
+          </p>
+        )}
+
+        {/* The one thing used daily: one tap, as big as the thumb could want.
+            Out: filled. Back: hollow, carrying the open trip inside it. */}
         {open ? (
-          <>
-            <button className="btn btn--hero btn--return" disabled={working} onClick={() => tap('return')}>
-              חזרתי הביתה
-            </button>
-            <p className="action__note">
-              <CarTag car={open.car} /> · בחוץ כבר <strong>{elapsed(now - open.startedAt)}</strong> · מ־{clock(open.startedAt)}
-            </p>
-          </>
+          <button className="btn btn--hero btn--return" disabled={working} aria-busy={working} onClick={() => tap('return')}>
+            <span>חזרתי הביתה</span>
+            <span className="btn--hero__sub">
+              בחוץ {elapsed(now - open.startedAt)} · מ־{clock(open.startedAt)} · {CAR_NAME[open.car] ?? ''}
+            </span>
+          </button>
         ) : (
+          <button className="btn btn--hero" disabled={working} aria-busy={working} onClick={() => tap('leave')}>
+            <span>יצאתי מהבית</span>
+            <span className="btn--hero__sub">עם ה{CAR_NAME[car]}</span>
+          </button>
+        )}
+
+        {!open && (
           <>
             <CarPicker value={car} onChange={setCar} disabled={working} />
-            <button className="btn btn--hero" disabled={working} onClick={() => tap('leave')}>
-              יצאתי מהבית
-            </button>
             {carTakenBy.length > 0 && (
               <p className="action__note">
                 ה{CAR_NAME[car]} כבר בחוץ עם {carTakenBy.map((o) => USER_NAME[o.user]).join(' ו')}.
-                {carTakenBy.some((o) => SIDE_OF[o.user] !== SIDE_OF[me]) && ' אם יוצאים ביחד, מספיק שרק אחד ידווח.'}
-              </p>
-            )}
-            {otherSide.length > 0 && (
-              <p className="action__note action__note--clash">
-                {otherSide.map((o) => USER_NAME[o.user]).join(' ו')} בחוץ — יציאה עכשיו תהיה התנגשות
+                {carTakenBy.some((o) => SIDE_OF[o.user] !== SIDE_OF[me]) && ' אם יוצאים ביחד, מספיק שאחד ידווח.'}
               </p>
             )}
           </>
@@ -110,21 +114,21 @@ export default function Home({ me, now: serverNow, open, out, recent }) {
       <section className="recent">
         <div className="section-head">
           <h2 className="h2">הנסיעות האחרונות שלי</h2>
-          <button className="link" onClick={() => setSheet({ trip: null })}>+ הוספה ידנית</button>
+          <button className="link" onClick={() => setSheet({ trip: null })}>הוספה ידנית</button>
         </div>
         {recent.length === 0 ? (
-          <p className="muted empty">עוד אין נסיעות.</p>
+          <p className="muted empty">עוד אין נסיעות. כשיוצאים, לוחצים על הכפתור למעלה.</p>
         ) : (
-          <ul className="rows">
+          <ul className="tray">
             {recent.map((t) => (
               <li key={t.id}>
-                <button className={`row${t.endedAt == null ? ' row--open' : ''}`} onClick={() => setSheet({ trip: t })}>
-                  <span className="row__main row__main--stack">
+                <button className={`trip${t.endedAt == null ? ' trip--open' : ''}`} onClick={() => setSheet({ trip: t })}>
+                  <span className="trip__main">
                     <span>{t.endedAt == null ? `${dayLabel(t.startedAt)} · מ־${clock(t.startedAt)}` : timeWindow(t.startedAt, t.endedAt)}</span>
                     <CarTag car={t.car} />
                   </span>
-                  <span className="row__side">
-                    {t.endedAt == null ? 'פתוחה' : elapsed(t.endedAt - t.startedAt)}
+                  <span className="trip__side">
+                    {t.endedAt == null ? 'עדיין בחוץ' : elapsed(t.endedAt - t.startedAt)}
                   </span>
                 </button>
               </li>
